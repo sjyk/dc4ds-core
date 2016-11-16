@@ -13,3 +13,15 @@ Krishnan, S., Wang, J., Franklin, M.J., Goldberg, K. and Kraska, T., PrivateClea
 Krishnan, S., Wang, J., Wu, E., Franklin, M.J. and Goldberg, K., 2016. ActiveClean: interactive data cleaning for statistical modeling. In VLDB 2016.
 
 Krishnan, S., Franklin, M.J., Goldberg, K. and Wu, E., BoostClean: Automating Error Detection and Repair For Machine Learning. Under Review.
+
+## Installation
+First, create a virtual environment for the project. First of all this is a good practice and isolates the dependencies.
+```
+virtualenv dc4ds 
+```
+
+To activate the virtual environment, run
+```
+cd dc4ds
+source bin/activate
+```
