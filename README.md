@@ -25,3 +25,10 @@ To activate the virtual environment, run
 cd dc4ds
 source bin/activate
 ```
+
+Then, install the core package
+```
+pip install dc4ds-core
+```
+
+## Tutorial
