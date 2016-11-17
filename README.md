@@ -30,5 +30,3 @@ Then, install the core package
 ```
 pip install dc4ds-core
 ```
-
-## Tutorial
