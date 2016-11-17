@@ -12,5 +12,9 @@ c = CSVLoader(fname="examples/datasets/missing_values.csv")
 
 d = FeaturizedDataset(c)
 
-print d.getFeatures(label_column="14")
+e,f = d.test_train_split()
+
+a = e.getFeatures(label_column="14")
+
+print f.getTestFeatures("14", a)
 

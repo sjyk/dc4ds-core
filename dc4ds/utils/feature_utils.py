@@ -72,6 +72,8 @@ def featurize(features_dataset, types):
 def featurizeFromList(features_dataset, types, tlist):
 	feature_list = []
 	transform_list = []
+	fmap = {}
+	fstart = 0
 
 	for i,t in enumerate(types):
 		col = [f[i] for f in features_dataset]
@@ -79,13 +81,24 @@ def featurizeFromList(features_dataset, types, tlist):
 		if t == "string" or t == "categorical" or t =="address":
 			vectorizer = tlist[i]
 			feature_list.append(vectorizer.transform(col))
+
+			fprev = fstart
+			fstart = fstart + feature_list[-1].shape[1]
+			for j in range(fprev, fstart):
+				fmap[j] = i
+
 		else:
 			vectorizer = tlist[i]
 			#print scipy.sparse.csr_matrix(vectorizer.transform(col)).T
 			feature_list.append(scipy.sparse.csr_matrix(vectorizer.transform(col)).T)
 
+			fprev = fstart
+			fstart = fstart + 1
+			for j in range(fprev, fstart):
+				fmap[j] = i
+
 	features = scipy.sparse.hstack(feature_list).tocsr()
-	return features
+	return features, None, fmap
 
 def get_acc_scores(ytrue, ypred, yscores=None):
 	
@@ -115,6 +128,10 @@ def labelize(column, t):
 		vectorizer = FunctionTransformer(tryParse)
 		
 		return vectorizer.fit_transform(column), vectorizer
+
+
+def labelizeForTest(column, vectorizer):
+	return vectorizer.fit_transform(column), None
 
 
 

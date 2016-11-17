@@ -8,6 +8,7 @@ import numpy as np
 import warnings
 from dc4ds.loaders.TypeInference import TypeInference
 from dc4ds.utils.feature_utils import *
+import copy
 
 class Dataset(object):
 
@@ -25,14 +26,11 @@ class Dataset(object):
         #loads the data with the provided args
         loadedData = loader.load()
 
-        #make it immutable
-        self.loadedData = tuple(tuple(row) for row in loadedData)
-
         self.types = TypeInference().getDataTypes(loadedData)
 
         pandasData = {}
         for i in range(len(self.types)):
-            pandasData[str(i)] = [row[i] for row in self.loadedData]
+            pandasData[str(i)] = [row[i] for row in loadedData]
 
         self.df = pandas.DataFrame(data=pandasData,
                                    index=index,
@@ -87,6 +85,9 @@ class Dataset(object):
         return errors
 
 
+    def toList(self):
+        return [ [row[c] for c in self.df.columns.values] for i, row in self.df.iterrows()]
+
 
 
 
@@ -109,21 +110,22 @@ class FeaturizedDataset(Dataset):
         """
         Turns a data frame into a numpy matrix and label column if avail
         """
+
         if label_column == None:
 
-            features, transforms, fmap = featurize(self.loadedData, self.types)
+            features, transforms, fmap = featurize(self.toList(), self.types)
 
             return FeatureStruct(features, transforms, fmap, None, None, None)
 
         else:
 
             index = np.where(self.df.columns.values == label_column)[0]
-            features = [[col for i, col in enumerate(row) if i != index] for row in self.loadedData]
+            features = [[col for i, col in enumerate(row) if i != index] for row in self.toList()]
             feature_types = [col for i, col in enumerate(self.types) if i != index]
 
             nfeatures, transforms, fmap = featurize(features, feature_types)
 
-            labels = [row[index] for row in self.loadedData]
+            labels = [row[index] for row in self.toList()]
             label_type = self.types[index]
             nlabels, label_transform = labelize(labels, label_type)
             
@@ -136,10 +138,47 @@ class FeaturizedDataset(Dataset):
 
 
 
+    def getTestFeatures(self, label_column, fstruct):
+        """
+        Turns a data frame into a numpy matrix and label column 
+        """
+        index = np.where(self.df.columns.values == label_column)[0]
+        features = [[col for i, col in enumerate(row) if i != index] for row in self.toList()]
+        feature_types = [col for i, col in enumerate(self.types) if i != index]
+
+        nfeatures, transforms, fmap = featurizeFromList(features, feature_types, fstruct.transforms)
+
+        labels = [row[index] for row in self.toList()]
+        label_type = self.types[index]
+        nlabels, label_transform = labelizeForTest(labels, fstruct.label_transform)
+            
+        return FeatureStruct(nfeatures, 
+                             transforms, 
+                             fmap, 
+                             label_column, 
+                             nlabels, 
+                             label_transform)
+
+
+    def test_train_split(self, fraction=0.8, random_state=42):
+        """
+        Splits a featurized datast into a test and training set
+        """
+        train=self.df.sample(frac=fraction,random_state=random_state)
+        test=self.df.drop(train.index)
+
+        trainDataset = copy.copy(self)
+        trainDataset.df = train
+
+        testDataset = copy.copy(self)
+        testDataset.df = test
+
+        return trainDataset,testDataset
+        
 
 class FeatureStruct(object):
     """
-    This dataset defines a data structure that holds
+    This class defines a data structure that holds
     all of the important feature variables
     """
 
@@ -156,6 +195,7 @@ class FeatureStruct(object):
         self.transforms = transforms
         self.fmap = fmap
         self.label_column = label_column
+        self.label_transform = label_transform
 
 
 
