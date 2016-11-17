@@ -53,3 +53,45 @@ You can use these constraints in programmatic assertions
 ```
 assert(my_dataset.isConsistent())
 ```
+
+## Adding More Complicated Constraints
+We can also add more complicated constraints such as conditional functional 
+dependencies. cfd1.csv contains:
+```
+95129, CA
+95014, CA
+95720, CA
+```
+
+cfd2.csv contains:
+```
+95129, CA
+95014, CA
+95720, CA
+95129, NY
+```
+
+Consider the program:
+```
+c = CSVLoader(fname="examples/datasets/cfd1.csv")
+
+d = Dataset(c)
+
+d.addConstraint(ConditionalFunctionalDependency(["0"],["1"], lambda x: True))
+
+print d.isConsistent()
+
+c = CSVLoader(fname="examples/datasets/cfd2.csv")
+
+d = Dataset(c)
+
+d.addConstraint(ConditionalFunctionalDependency(["0"],["1"], lambda x: True))
+
+print d.isConsistent()
+```
+
+The output is:
+```
+True
+False
+```

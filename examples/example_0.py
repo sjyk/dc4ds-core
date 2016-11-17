@@ -14,4 +14,4 @@ d = Dataset(c)
 
 d.addConstraint(DomainConstraint(["2"], lambda x: '?' not in x[0]))
 
-print d.getErrorIndices()
+print d.isConsistent()
