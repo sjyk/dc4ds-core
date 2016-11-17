@@ -22,4 +22,6 @@ d = Dataset(c)
 
 d.addConstraint(ConditionalFunctionalDependency(["0"],["1"], lambda x: True))
 
+print d.getErrorIndices()
+
 print d.isConsistent()

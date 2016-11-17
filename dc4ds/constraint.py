@@ -69,16 +69,20 @@ class ConditionalFunctionalDependency(Constraint):
     def __init__(self, 
                  column_list1, 
                  column_list2, 
-                 lambda_rule):
+                 lambda_rule,
+                 ignore_max=True):
         """
         column_list1 defines a projection
         column_list2 defines a projection
         lambda_rule defines a predicate
+        ignore_max means that when returning the violations
+        ignore the max key
         """
 
         self.column_list1 = column_list1
         self.column_list2 = column_list2
         self.lambda_rule = lambda_rule
+        self.ignore_max = ignore_max
 
 
     def eval(self, df):
@@ -103,11 +107,33 @@ class ConditionalFunctionalDependency(Constraint):
         for k in implication_table:
             consequents = implication_table[k]
 
-            rows = set([c[1] for c in consequents])
-            vals = set([c[0] for c in consequents])
+            vals_dict = {}
 
-            if len(vals) != 1:
-                inconsistent = inconsistent.union(rows)
+            for c in consequents:
+                if c[0] not in vals_dict:
+                    vals_dict[c[0]] = set()
+
+                vals_dict[c[0]].add(c[1])
+
+            keys = vals_dict.keys()
+
+            if len(keys) != 1 and \
+               not self.ignore_max:
+
+                for k in keys:
+                    inconsistent = inconsistent.union(vals_dict[k])
+
+            elif len(keys) != 1 and \
+                  self.ignore_max:
+
+                key_counts = [(len(vals_dict[k]),k) for k in vals_dict]
+                key_counts.sort()
+                ignore_key = key_counts[-1][1]
+
+                for k in keys:
+                    if k != ignore_key:
+                        inconsistent = inconsistent.union(vals_dict[k])
+
 
         return inconsistent
 
