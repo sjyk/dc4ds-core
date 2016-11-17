@@ -34,8 +34,7 @@ class Dataset(object):
                                    dtype=dtype,
                                    copy=copy)
 
-        self.dconstraints = []
-
+        self.constraints = []
 
     def setColumnNames(self, new_names):
         """
@@ -44,11 +43,11 @@ class Dataset(object):
         self.df.columns = new_names
 
 
-    def addDomainConstraint(self,constraint):
+    def addConstraint(self,constraint):
         """
-        Adds a domain constraint
+        Adds a constraint
         """
-        self.dconstraints.append(constraint)
+        self.constraints.append(constraint)
 
 
     def isConsistent(self):
@@ -56,10 +55,10 @@ class Dataset(object):
         Tests if the data frame is consistent
         """
 
-        if len(self.dconstraints) == 0:
+        if len(self.constraints) == 0:
             warnings.warn("There are no constraints on this Dataset", SyntaxWarning)
 
-        for const in self.dconstraints:
+        for const in self.constraints:
             if not const.isConsistent(self.df):
                 return False
 
@@ -73,53 +72,10 @@ class Dataset(object):
 
         errors = set()
 
-        for const in self.dconstraints:
+        for const in self.constraints:
             errorRows = const.eval(self.df)
-            for col in const.column_list:
+            for col in const.getColumnList(self.df):
                 for row in errorRows:
                     errors.add((row, col))
 
         return errors
-
-
-
-
-
-class DomainConstraint(object):
-    """
-    This is a wrapper class for domain integrity constraints
-    """
-
-    def __init__(self, column_list, lambda_rule):
-        """
-        column_list defines a projection
-        lambda_rule defines a function of the projection to {True, False}
-        """
-
-        self.column_list = column_list
-        self.lambda_rule = lambda_rule
-
-
-    def eval(self, df):
-        """
-        Returns a list of rows from the df that violate the rule
-        """
-        projection = df[self.column_list]
-        inconsistent = set()
-
-        for index, row in projection.iterrows():
-            argument = tuple([row[col] for col in self.column_list])
-
-            if not self.lambda_rule(argument):
-                inconsistent.add(index)
-
-        return inconsistent
-
-    def isConsistent(self, df):
-        """
-        Is the df consistent w.r.t this rule
-        """
-
-        return (len(self.eval(df)) == 0)
-
-
